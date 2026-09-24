@@ -1,0 +1,53 @@
+# ---------------------------------------------------------------
+# STM32CubeIDE / Eclipse
+# ---------------------------------------------------------------
+# Workspace metadata (IDE tu sinh, rieng tung may)
+.metadata/
+RemoteSystemsTempFiles/
+
+# Thu muc build cua IDE (Debug/, Release/ o moi project)
+Debug/
+Release/
+
+# Cau hinh IDE rieng tung may + cau hinh debug/launch
+.settings/
+*.launch
+
+# CubeMX tu sinh khi mo .ioc (giu lai file .ioc)
+.mxproject
+
+# ---------------------------------------------------------------
+# San pham build (neu build ngoai IDE)
+# ---------------------------------------------------------------
+*.o
+*.d
+*.su
+*.cyclo
+*.elf
+*.map
+*.list
+*.hex
+*.srec
+build/
+# Khong ignore *.bin: test/images/app_v1.bin, app_v2.bin... can duoc commit (SAD 15.1).
+# File .bin build ra nam trong Debug/ nen da bi bo qua o tren.
+
+# ---------------------------------------------------------------
+# Python (host/, test/, tools/)
+# ---------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# ---------------------------------------------------------------
+# Editor / OS
+# ---------------------------------------------------------------
+.vscode/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
