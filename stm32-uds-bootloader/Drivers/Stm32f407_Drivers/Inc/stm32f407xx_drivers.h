@@ -16,5 +16,6 @@
 #include "stm32f407xx_gpio.h"
 #include "stm32f407xx_systick.h"
 #include "stm32f407xx_uart.h"
+#include "stm32f407xx_flash.h"
 
 #endif /* INC_STM32F407XX_DRIVERS_H_ */
