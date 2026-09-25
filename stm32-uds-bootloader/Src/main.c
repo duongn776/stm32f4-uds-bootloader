@@ -1,78 +1,148 @@
 /**
- * main.c - Test LED PD12..PD15 tren STM32F407G-DISC1
- * Chi dung CMSIS (stm32f4xx.h), khong dung HAL.
+ * main.c - Test GPIO driver (stm32f407xx_gpio) tren STM32F407G-DISC1
  *
  *   PD12 = LD4 xanh la | PD13 = LD3 cam | PD14 = LD5 do | PD15 = LD6 xanh duong
+ *   PA0  = B1 (nut USER, co dien tro pull-down ngoai, nhan = muc 1)
  *
  * Clock: HSI 16 MHz mac dinh sau reset (SystemCoreClock = 16000000).
+ *
+ * Kich ban test (lap vo han):
+ *   Test 1: GPIO_WritePin  - chay vong tung LED
+ *   Test 2: GPIO_ReadPin   - ghi roi doc lai tung LED, sai -> LED do sang mai
+ *   Test 3: GPIO_TogglePin - nhay ca 4 LED 3 lan
+ *   Test 4: EXTI (nut B1)  - moi lan nhan nut, LED xanh duong doi trang thai
+ *                            (chay song song voi cac test tren qua ngat EXTI0)
+ *
+ * Delay dung driver SysTick (ngat 1 ms, Delay_ms/getTick).
  */
-#include "stm32f4xx.h"
+#include "stm32f407xx_gpio.h"
+#include "stm32f407xx_systick.h"
 
-#define LED_GREEN   12U
-#define LED_ORANGE  13U
-#define LED_RED     14U
-#define LED_BLUE    15U
-#define LED_ALL     ((1UL << LED_GREEN) | (1UL << LED_ORANGE) | (1UL << LED_RED) | (1UL << LED_BLUE))
+#define LED_PORT    GPIOD
+#define LED_GREEN   GPIO_PIN_12
+#define LED_ORANGE  GPIO_PIN_13
+#define LED_RED     GPIO_PIN_14
+#define LED_BLUE    GPIO_PIN_15
 
-/* Delay chinh xac theo ms bang SysTick (polling, chua dung ngat) */
-static void delay_ms(uint32_t ms)
+#define BTN_PORT    GPIOA
+#define BTN_PIN     GPIO_PIN_0
+
+static volatile uint32_t btnCount = 0U;   /* so lan nhan nut, xem trong debugger */
+
+/* Loi khong phuc hoi: tat het, LED do sang mai */
+static void error_handler(void)
 {
-    SysTick->LOAD = (SystemCoreClock / 1000U) - 1U;   /* 1 ms */
-    SysTick->VAL  = 0U;
-    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk;
-
-    while (ms-- > 0U) {
-        while ((SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk) == 0U) { }
-    }
-    SysTick->CTRL = 0U;
+    __disable_irq();
+    GPIO_WritePin(LED_PORT, LED_GREEN,  GPIO_PIN_RESET);
+    GPIO_WritePin(LED_PORT, LED_ORANGE, GPIO_PIN_RESET);
+    GPIO_WritePin(LED_PORT, LED_BLUE,   GPIO_PIN_RESET);
+    GPIO_WritePin(LED_PORT, LED_RED,    GPIO_PIN_SET);
+    while (1) { }
 }
 
 static void led_init(void)
 {
-    /* 1. Bat clock GPIOD (RCC_AHB1ENR bit 3) */
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
-    (void)RCC->AHB1ENR;                                /* doc lai de cho clock on dinh */
+    GPIO_HandleTypeDef hLed = {
+        .pGPIOx = LED_PORT,
+        .Init = {
+            .Mode   = GPIO_MODE_OUTPUT,
+            .OPType = GPIO_OPTYPE_PP,
+            .Pull   = GPIO_NOPULL,
+            .Speed  = GPIO_SPEED_LOW,
+        },
+    };
+    const uint8_t pins[] = { LED_GREEN, LED_ORANGE, LED_RED, LED_BLUE };
 
-    /* 2. PD12..PD15: output (MODER = 01) */
-    GPIOD->MODER &= ~(GPIO_MODER_MODER12 | GPIO_MODER_MODER13 |
-                      GPIO_MODER_MODER14 | GPIO_MODER_MODER15);
-    GPIOD->MODER |=  (GPIO_MODER_MODER12_0 | GPIO_MODER_MODER13_0 |
-                      GPIO_MODER_MODER14_0 | GPIO_MODER_MODER15_0);
-
-    /* 3. Push-pull, toc do thap, khong pull-up/down */
-    GPIOD->OTYPER  &= ~LED_ALL;
-    GPIOD->OSPEEDR &= ~(GPIO_OSPEEDER_OSPEEDR12 | GPIO_OSPEEDER_OSPEEDR13 |
-                        GPIO_OSPEEDER_OSPEEDR14 | GPIO_OSPEEDER_OSPEEDR15);
-    GPIOD->PUPDR   &= ~(GPIO_PUPDR_PUPDR12 | GPIO_PUPDR_PUPDR13 |
-                        GPIO_PUPDR_PUPDR14 | GPIO_PUPDR_PUPDR15);
-
-    /* 4. Tat het LED: BSRR nua cao = reset */
-    GPIOD->BSRR = LED_ALL << 16;
+    for (uint32_t i = 0U; i < sizeof(pins); i++)
+    {
+        hLed.Init.Pin = pins[i];
+        if (GPIO_Init(&hLed) != GPIO_OK)
+        {
+            error_handler();
+        }
+        GPIO_WritePin(LED_PORT, pins[i], GPIO_PIN_RESET);
+    }
 }
 
-static void led_on(uint32_t pin)  { GPIOD->BSRR = (1UL << pin); }          /* set   */
-static void led_off(uint32_t pin) { GPIOD->BSRR = (1UL << (pin + 16U)); }  /* reset */
+static void button_init(void)
+{
+    GPIO_HandleTypeDef hBtn = {
+        .pGPIOx = BTN_PORT,
+        .Init = {
+            .Pin  = BTN_PIN,
+            .Mode = GPIO_MODE_IT_RISING,   /* nhan nut: 0 -> 1 */
+            .Pull = GPIO_NOPULL,           /* board da co pull-down ngoai */
+        },
+    };
+
+    if (GPIO_Init(&hBtn) != GPIO_OK)
+    {
+        error_handler();
+    }
+
+    GPIO_IRQPriorityConfig(EXTI0_IRQn, 15U);
+    GPIO_IRQInterruptConfig(EXTI0_IRQn, ENABLE);
+}
+
+/* Vector EXTI0 (ten ham trung voi startup_stm32f407vgtx.s) */
+void EXTI0_IRQHandler(void)
+{
+    GPIO_IRQHandler(BTN_PIN);
+}
+
+/* Override ham weak trong driver */
+void GPIO_EXTI_Callback(uint8_t GPIO_pin)
+{
+    if (GPIO_pin == BTN_PIN)
+    {
+        btnCount++;
+        GPIO_TogglePin(LED_PORT, LED_BLUE);
+    }
+}
 
 int main(void)
 {
-    const uint32_t order[4] = { LED_GREEN, LED_ORANGE, LED_RED, LED_BLUE };
+    const uint8_t order[] = { LED_GREEN, LED_ORANGE, LED_RED };
 
+    SysTick_Init();   /* time base 1 ms, phai goi truoc Delay_ms */
     led_init();
+    button_init();
 
-    while (1) {
-        /* Test 1: chay vong tung LED */
-        for (uint32_t i = 0; i < 4U; i++) {
-            led_on(order[i]);
-            delay_ms(200);
-            led_off(order[i]);
+    while (1)
+    {
+        /* Test 1: GPIO_WritePin - chay vong tung LED (khong dung LED xanh duong vi danh cho nut) */
+        for (uint32_t i = 0U; i < sizeof(order); i++)
+        {
+            GPIO_WritePin(LED_PORT, order[i], GPIO_PIN_SET);
+            Delay_ms(200);
+            GPIO_WritePin(LED_PORT, order[i], GPIO_PIN_RESET);
         }
 
-        /* Test 2: bat / tat tat ca 3 lan */
-        for (uint32_t i = 0; i < 3U; i++) {
-            GPIOD->BSRR = LED_ALL;           /* bat het */
-            delay_ms(300);
-            GPIOD->BSRR = LED_ALL << 16;     /* tat het */
-            delay_ms(300);
+        /* Test 2: GPIO_ReadPin - o che do output, IDR phan anh muc thuc te tren chan */
+        for (uint32_t i = 0U; i < sizeof(order); i++)
+        {
+            GPIO_WritePin(LED_PORT, order[i], GPIO_PIN_SET);
+            Delay_ms(1);   /* IDR can vai chu ky dong bo sau khi ghi */
+            if (GPIO_ReadPin(LED_PORT, order[i]) != GPIO_PIN_SET)
+            {
+                error_handler();
+            }
+
+            GPIO_WritePin(LED_PORT, order[i], GPIO_PIN_RESET);
+            Delay_ms(1);
+            if (GPIO_ReadPin(LED_PORT, order[i]) != GPIO_PIN_RESET)
+            {
+                error_handler();
+            }
+        }
+
+        /* Test 3: GPIO_TogglePin - nhay 3 LED 3 lan, LED xanh duong khong bi anh huong */
+        for (uint32_t i = 0U; i < 6U; i++)
+        {
+            GPIO_TogglePin(LED_PORT, LED_GREEN);
+            GPIO_TogglePin(LED_PORT, LED_ORANGE);
+            GPIO_TogglePin(LED_PORT, LED_RED);
+            Delay_ms(300);
         }
     }
 }

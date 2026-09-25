@@ -15581,6 +15581,116 @@ typedef struct
 #define USB_OTG_HS_MAX_IN_ENDPOINTS                    6U    /* Including EP0 */
 #define USB_OTG_HS_MAX_OUT_ENDPOINTS                   6U    /* Including EP0 */
 #define USB_OTG_HS_TOTAL_FIFO_SIZE                     4096U /* in Bytes */
+
+
+/*
+ * Clock Enable Macros for GPIOx peripherals
+ */
+
+#define GPIOA_CLK_ENABLE()    	(RCC->AHB1ENR |= (1 << 0))
+#define GPIOB_CLK_ENABLE()		(RCC->AHB1ENR |= (1 << 1))
+#define GPIOC_CLK_ENABLE()		(RCC->AHB1ENR |= (1 << 2))
+#define GPIOD_CLK_ENABLE()		(RCC->AHB1ENR |= (1 << 3))
+#define GPIOE_CLK_ENABLE()		(RCC->AHB1ENR |= (1 << 4))
+#define GPIOF_CLK_ENABLE()		(RCC->AHB1ENR |= (1 << 5))
+#define GPIOG_CLK_ENABLE()		(RCC->AHB1ENR |= (1 << 6))
+#define GPIOH_CLK_ENABLE()		(RCC->AHB1ENR |= (1 << 7))
+#define GPIOI_CLK_ENABLE()		(RCC->AHB1ENR |= (1 << 8))
+
+/*
+ *  returns port code for given GPIOx base address
+ */
+/*
+ * This macro returns a code (0 to 8, SYSCFG_EXTICR encoding) for a given GPIO base address (x)
+ */
+#define GPIO_BASEADDR_TO_CODE(x)      ( ((x) == GPIOA) ? 0U : \
+                                        ((x) == GPIOB) ? 1U : \
+                                        ((x) == GPIOC) ? 2U : \
+                                        ((x) == GPIOD) ? 3U : \
+                                        ((x) == GPIOE) ? 4U : \
+                                        ((x) == GPIOF) ? 5U : \
+                                        ((x) == GPIOG) ? 6U : \
+                                        ((x) == GPIOH) ? 7U : \
+                                        ((x) == GPIOI) ? 8U : \
+                                        0U )
+
+/*
+ * Clock Enable Macros for SYSCFG peripheral
+ */
+#define SYSCFG_CLK_ENABLE() (RCC->APB2ENR |= (1 << 14))
+
+#define __vo volatile
+
+/**********************************START:Processor Specific Details **********************************/
+/*
+ * ARM Cortex Mx Processor NVIC ISERx register Addresses
+ */
+
+#define NVIC_ISER0          ( (__vo uint32_t*)0xE000E100 )
+#define NVIC_ISER1          ( (__vo uint32_t*)0xE000E104 )
+#define NVIC_ISER2          ( (__vo uint32_t*)0xE000E108 )
+#define NVIC_ISER3          ( (__vo uint32_t*)0xE000E10C )
+
+
+/*
+ * ARM Cortex Mx Processor NVIC ICERx register Addresses
+ */
+#define NVIC_ICER0 			((__vo uint32_t*)0XE000E180)
+#define NVIC_ICER1			((__vo uint32_t*)0XE000E184)
+#define NVIC_ICER2  		((__vo uint32_t*)0XE000E188)
+#define NVIC_ICER3			((__vo uint32_t*)0XE000E18C)
+
+
+/*
+ * ARM Cortex Mx Processor Priority Register Address Calculation
+ */
+#define NVIC_PR_BASEADDR 	((__vo uint32_t*)0xE000E400)
+
+/*
+ * ARM Cortex Mx Processor number of priority bits implemented in Priority Register
+ */
+#define NO_PR_BITS_IMPLEMENTED  4
+
+//some generic macros
+#define TRUE				1
+#define FALSE				0
+#define ENABLE 				1
+#define DISABLE 			0
+#define SET 				ENABLE
+#define RESET 				DISABLE
+#define GPIO_PIN_SET        SET
+#define GPIO_PIN_RESET      RESET
+#define FLAG_RESET          RESET
+#define FLAG_SET 			SET
+
+
+/*
+ * Clock Disable Macros for GPIOx peripherals
+ */
+#define GPIOA_CLK_DISABLE()   (RCC->AHB1ENR &= ~(1 << 0))
+#define GPIOB_CLK_DISABLE()   (RCC->AHB1ENR &= ~(1 << 1))
+#define GPIOC_CLK_DISABLE()   (RCC->AHB1ENR &= ~(1 << 2))
+#define GPIOD_CLK_DISABLE()   (RCC->AHB1ENR &= ~(1 << 3))
+#define GPIOE_CLK_DISABLE()   (RCC->AHB1ENR &= ~(1 << 4))
+#define GPIOF_CLK_DISABLE()   (RCC->AHB1ENR &= ~(1 << 5))
+#define GPIOG_CLK_DISABLE()   (RCC->AHB1ENR &= ~(1 << 6))
+#define GPIOH_CLK_DISABLE()   (RCC->AHB1ENR &= ~(1 << 7))
+#define GPIOI_CLK_DISABLE()   (RCC->AHB1ENR &= ~(1 << 8))
+
+
+/*
+ *  Macros to reset GPIOx peripherals
+ */
+#define GPIOA_REG_RESET()               do{ (RCC->AHB1RSTR |= (1 << 0)); (RCC->AHB1RSTR &= ~(1 << 0)); }while(0)
+#define GPIOB_REG_RESET()               do{ (RCC->AHB1RSTR |= (1 << 1)); (RCC->AHB1RSTR &= ~(1 << 1)); }while(0)
+#define GPIOC_REG_RESET()               do{ (RCC->AHB1RSTR |= (1 << 2)); (RCC->AHB1RSTR &= ~(1 << 2)); }while(0)
+#define GPIOD_REG_RESET()               do{ (RCC->AHB1RSTR |= (1 << 3)); (RCC->AHB1RSTR &= ~(1 << 3)); }while(0)
+#define GPIOE_REG_RESET()               do{ (RCC->AHB1RSTR |= (1 << 4)); (RCC->AHB1RSTR &= ~(1 << 4)); }while(0)
+#define GPIOF_REG_RESET()               do{ (RCC->AHB1RSTR |= (1 << 5)); (RCC->AHB1RSTR &= ~(1 << 5)); }while(0)
+#define GPIOG_REG_RESET()               do{ (RCC->AHB1RSTR |= (1 << 6)); (RCC->AHB1RSTR &= ~(1 << 6)); }while(0)
+#define GPIOH_REG_RESET()               do{ (RCC->AHB1RSTR |= (1 << 7)); (RCC->AHB1RSTR &= ~(1 << 7)); }while(0)
+#define GPIOI_REG_RESET()               do{ (RCC->AHB1RSTR |= (1 << 8)); (RCC->AHB1RSTR &= ~(1 << 8)); }while(0)
+
 /******************************************************************************/
 /*  For a painless codes migration between the STM32F4xx device product       */
 /*  lines, the aliases defined below are put in place to overcome the         */
