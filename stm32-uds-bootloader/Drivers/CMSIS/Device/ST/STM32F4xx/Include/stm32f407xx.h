@@ -15691,6 +15691,41 @@ typedef struct
 #define GPIOH_REG_RESET()               do{ (RCC->AHB1RSTR |= (1 << 7)); (RCC->AHB1RSTR &= ~(1 << 7)); }while(0)
 #define GPIOI_REG_RESET()               do{ (RCC->AHB1RSTR |= (1 << 8)); (RCC->AHB1RSTR &= ~(1 << 8)); }while(0)
 
+
+/*
+ * Clock Enable Macros for USARTx peripherals
+ */
+#define USART1_CLK_ENABLE() (RCC->APB2ENR |= (1 << 4))
+#define USART2_CLK_ENABLE() (RCC->APB1ENR |= (1 << 17))
+#define USART3_CLK_ENABLE() (RCC->APB1ENR |= (1 << 18))
+#define UART4_CLK_ENABLE()  (RCC->APB1ENR |= (1 << 19))
+#define UART5_CLK_ENABLE()  (RCC->APB1ENR |= (1 << 20))
+#define USART6_CLK_ENABLE() (RCC->APB2ENR |= (1 << 5))
+
+/*
+ * Clock Disable Macros for USARTx peripherals
+ */
+#define USART1_CLK_DISABLE()  (RCC->APB2ENR &= ~(1 << 4))
+#define USART2_CLK_DISABLE()  (RCC->APB1ENR &= ~(1 << 17))
+#define USART3_CLK_DISABLE()  (RCC->APB1ENR &= ~(1 << 18))
+#define UART4_CLK_DISABLE()   (RCC->APB1ENR &= ~(1 << 19))
+#define UART5_CLK_DISABLE()   (RCC->APB1ENR &= ~(1 << 20))
+#define USART6_CLK_DISABLE()  (RCC->APB2ENR &= ~(1 << 5))
+
+
+/*
+ *  Macros to reset USARTx peripherals
+ */
+#define USART1_REG_RESET()            do { (RCC->APB2RSTR |= (1 << 4)); (RCC->APB2RSTR &= ~(1 << 4)); } while(0)
+#define USART2_REG_RESET()            do { (RCC->APB1RSTR |= (1 << 17)); (RCC->APB1RSTR &= ~(1 << 17)); } while(0)
+#define USART3_REG_RESET()            do { (RCC->APB1RSTR |= (1 << 18)); (RCC->APB1RSTR &= ~(1 << 18)); } while(0)
+#define UART4_REG_RESET()             do { (RCC->APB1RSTR |= (1 << 19)); (RCC->APB1RSTR &= ~(1 << 19)); } while(0)
+#define UART5_REG_RESET()             do { (RCC->APB1RSTR |= (1 << 20)); (RCC->APB1RSTR &= ~(1 << 20)); } while(0)
+#define USART6_REG_RESET()            do { (RCC->APB2RSTR |= (1 << 5)); (RCC->APB2RSTR &= ~(1 << 5)); } while(0)
+
+
+
+
 /******************************************************************************/
 /*  For a painless codes migration between the STM32F4xx device product       */
 /*  lines, the aliases defined below are put in place to overcome the         */

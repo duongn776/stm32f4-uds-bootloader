@@ -15,8 +15,11 @@
  *
  * Delay dung driver SysTick (ngat 1 ms, Delay_ms/getTick).
  */
-#include "stm32f407xx_gpio.h"
-#include "stm32f407xx_systick.h"
+#include "stm32f407xx_drivers.h"
+#include "test_uart2.h"
+
+/* 1: chay test USART2 (PA2 TX / PA3 RX), 0: chay test GPIO/EXTI ben duoi */
+#define TEST_UART2      1
 
 #define LED_PORT    GPIOD
 #define LED_GREEN   GPIO_PIN_12
@@ -105,6 +108,11 @@ int main(void)
     const uint8_t order[] = { LED_GREEN, LED_ORANGE, LED_RED };
 
     SysTick_Init();   /* time base 1 ms, phai goi truoc Delay_ms */
+
+#if TEST_UART2
+    Test_UART2_Run();   /* khong tra ve */
+#endif
+
     led_init();
     button_init();
 
